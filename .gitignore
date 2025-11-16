@@ -1,0 +1,13 @@
+node_modules/
+client/node_modules/
+*.log
+.DS_Store
+.env
+build/
+dist/
+client/build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
