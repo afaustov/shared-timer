@@ -177,6 +177,13 @@
   letter-spacing: -0.5px;
 }
 
+.setup-card-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
 .input-group {
   display: flex;
   flex-direction: column;

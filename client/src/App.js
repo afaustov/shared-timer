@@ -186,7 +186,7 @@ function App() {
           <h1 className="title">Shared Timer</h1>
           
           <div className="setup-options">
-            <div className="setup-card">
+            <div className="setup-card setup-card-center">
               <button onClick={createSession} className="btn btn-primary btn-large">
                 Create
               </button>
