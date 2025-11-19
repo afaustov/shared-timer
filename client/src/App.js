@@ -172,144 +172,178 @@ function App() {
     }
   };
 
-  const formatTime = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
 
-  return (
-    <div className="app">
-      <div className="container">
-        {!sessionId ? (
-          <div className="session-setup">
-            <h1 className="title">Shared Timer</h1>
+// Calculate progress for the timer (0 to 1)
+// If duration is 0, progress is 0.
+// We want the runner to start at 12 (0 deg) and move clockwise as time decreases.
+// This means we are visualizing ELAPSED time.
+// Progress = 1 - (remaining / duration)
+const progress = timer.duration > 0 ? 1 - (timer.remainingTime / timer.duration) : 0;
+const radius = 140;
+const circumference = 2 * Math.PI * radius;
+const strokeDashoffset = circumference - (progress * circumference);
+// Rotation for the runner dot (in degrees)
+const rotation = progress * 360;
 
-            <div className="setup-options">
-              <div className="setup-card setup-card-center">
-                <button onClick={createSession} className="btn btn-primary btn-large">
-                  Create
-                </button>
+return (
+  <div className="app">
+    <div className="container">
+      {!sessionId ? (
+        <div className="session-setup">
+          <h1 className="title">Shared Timer</h1>
+
+          <div className="setup-options">
+            <div className="setup-card setup-card-center">
+              <button onClick={createSession} className="btn btn-primary btn-large">
+                Create
+              </button>
+            </div>
+
+            <div className="setup-card">
+              <div className="input-group">
+                <input
+                  type="text"
+                  placeholder="ENTER SESSION ID"
+                  value={inputSessionId}
+                  onChange={(e) => setInputSessionId(e.target.value.toUpperCase())}
+                  onKeyPress={(e) => e.key === 'Enter' && joinSession()}
+                  style={{ textTransform: 'uppercase' }}
+                />
               </div>
+              <button onClick={joinSession} className="btn btn-secondary btn-large">
+                Join
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="timer-view">
+          <div className="session-info">
+            <div className="session-id">
+              <span>Session ID: </span>
+              <code>{sessionId.toUpperCase()}</code>
+              <button
+                onClick={() => navigator.clipboard.writeText(sessionId.toUpperCase())}
+                className="copy-btn"
+                title="Copy"
+              >
+                📋
+              </button>
+            </div>
+            <div className="role-badge">
+              {isHost ? '👑 Host' : '👤 Participant'}
+            </div>
+          </div>
 
-              <div className="setup-card">
-                <div className="input-group">
-                  <input
-                    type="text"
-                    placeholder="ENTER SESSION ID"
-                    value={inputSessionId}
-                    onChange={(e) => setInputSessionId(e.target.value.toUpperCase())}
-                    onKeyPress={(e) => e.key === 'Enter' && joinSession()}
-                    style={{ textTransform: 'uppercase' }}
-                  />
-                </div>
-                <button onClick={joinSession} className="btn btn-secondary btn-large">
-                  Join
-                </button>
+          <div className="timer-display">
+            <div className="timer-container">
+              <svg className="timer-svg" width="320" height="320" viewBox="0 0 320 320">
+                {/* Background Circle */}
+                <circle
+                  className="timer-track"
+                  cx="160"
+                  cy="160"
+                  r={radius}
+                />
+                {/* Progress Circle */}
+                <circle
+                  className="timer-progress"
+                  cx="160"
+                  cy="160"
+                  r={radius}
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  transform={`rotate(-90 160 160)`}
+                />
+                {/* Runner Dot */}
+                <g transform={`translate(160, 160) rotate(${rotation - 90}) translate(${radius}, 0)`}>
+                  <circle className="timer-runner" r="8" />
+                </g>
+              </svg>
+              <div className="timer-time">
+                {formatTime(timer.remainingTime)}
               </div>
             </div>
           </div>
-        ) : (
-          <div className="timer-view">
-            <div className="session-info">
-              <div className="session-id">
-                <span>Session ID: </span>
-                <code>{sessionId.toUpperCase()}</code>
-                <button
-                  onClick={() => navigator.clipboard.writeText(sessionId.toUpperCase())}
-                  className="copy-btn"
-                  title="Copy"
-                >
-                  📋
-                </button>
-              </div>
-              <div className="role-badge">
-                {isHost ? '👑 Host' : '👤 Participant'}
-              </div>
-            </div>
 
-            <div className="timer-display">
-              <div className={`timer-circle ${timer.isRunning ? 'running' : ''}`}>
-                <div className="timer-time">
-                  {formatTime(timer.remainingTime)}
-                </div>
-              </div>
-            </div>
-
-            {isHost && (
-              <div className="timer-controls">
-                {!timer.isRunning && timer.remainingTime === 0 ? (
-                  <div className="start-controls">
-                    <div className="time-inputs">
-                      <div className="input-wrapper">
-                        <label>MIN</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="999"
-                          value={inputMinutes}
-                          onChange={(e) => setInputMinutes(Math.max(0, parseInt(e.target.value) || 0))}
-                        />
-                      </div>
-                      <span className="time-separator">:</span>
-                      <div className="input-wrapper">
-                        <label>SEC</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="59"
-                          value={inputSeconds}
-                          onChange={(e) => setInputSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                        />
-                      </div>
+          {isHost && (
+            <div className="timer-controls">
+              {!timer.isRunning && timer.remainingTime === 0 ? (
+                <div className="start-controls">
+                  <div className="time-inputs">
+                    <div className="input-wrapper">
+                      <label>MIN</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="999"
+                        value={inputMinutes}
+                        onChange={(e) => setInputMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                      />
                     </div>
-                    <button onClick={startTimer} className="btn btn-primary btn-large">
-                      ▶ Start
-                    </button>
+                    <span className="time-separator">:</span>
+                    <div className="input-wrapper">
+                      <label>SEC</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={inputSeconds}
+                        onChange={(e) => setInputSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <div className="control-buttons">
-                    {timer.isRunning ? (
-                      <button onClick={pauseTimer} className="btn btn-secondary">
-                        ⏸ Pause
-                      </button>
-                    ) : (
-                      <button onClick={resumeTimer} className="btn btn-primary">
-                        ▶ Resume
-                      </button>
-                    )}
-                    <button onClick={resetTimer} className="btn btn-danger">
-                      ↻ Reset
+                  <button onClick={startTimer} className="btn btn-primary btn-large">
+                    ▶ Start
+                  </button>
+                </div>
+              ) : (
+                <div className="control-buttons">
+                  {timer.isRunning ? (
+                    <button onClick={pauseTimer} className="btn btn-secondary">
+                      ⏸ Pause
                     </button>
-                  </div>
-                )}
-              </div>
-            )}
+                  ) : (
+                    <button onClick={resumeTimer} className="btn btn-primary">
+                      ▶ Resume
+                    </button>
+                  )}
+                  <button onClick={resetTimer} className="btn btn-danger">
+                    ↻ Reset
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-            {!isHost && (
-              <div className="participant-spacer"></div>
-            )}
+          {!isHost && (
+            <div className="participant-spacer"></div>
+          )}
 
-            <button
-              onClick={() => {
-                setSessionId('');
-                setIsHost(false);
-                setTimer({
-                  duration: 0,
-                  isRunning: false,
-                  remainingTime: 0
-                });
-              }}
-              className="btn btn-link"
-            >
-              Leave Session
-            </button>
-          </div>
-        )}
-      </div>
+          <button
+            onClick={() => {
+              setSessionId('');
+              setIsHost(false);
+              setTimer({
+                duration: 0,
+                isRunning: false,
+                remainingTime: 0
+              });
+            }}
+            className="btn btn-link"
+          >
+            Leave Session
+          </button>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 }
 
 export default App;
