@@ -31,6 +31,7 @@ function App() {
     remainingTime: 0
   });
   const [inputMinutes, setInputMinutes] = useState(5);
+  const [inputSeconds, setInputSeconds] = useState(0);
   const [inputSessionId, setInputSessionId] = useState('');
   const intervalRef = useRef(null);
 
@@ -148,7 +149,7 @@ function App() {
 
   const startTimer = () => {
     if (socket && sessionId && isHost) {
-      const duration = inputMinutes * 60 * 1000; // Convert to milliseconds
+      const duration = (inputMinutes * 60 + inputSeconds) * 1000; // Convert to milliseconds
       socket.emit('start-timer', { sessionId, duration });
     }
   };
@@ -194,10 +195,9 @@ function App() {
 
               <div className="setup-card">
                 <div className="input-group">
-                  <label>Session ID:</label>
                   <input
                     type="text"
-                    placeholder="Enter ID"
+                    placeholder="ENTER SESSION ID"
                     value={inputSessionId}
                     onChange={(e) => setInputSessionId(e.target.value.toUpperCase())}
                     onKeyPress={(e) => e.key === 'Enter' && joinSession()}
@@ -241,15 +241,28 @@ function App() {
               <div className="timer-controls">
                 {!timer.isRunning && timer.remainingTime === 0 ? (
                   <div className="start-controls">
-                    <div className="input-group">
-                      <label>Minutes:</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="999"
-                        value={inputMinutes}
-                        onChange={(e) => setInputMinutes(parseInt(e.target.value) || 1)}
-                      />
+                    <div className="time-inputs">
+                      <div className="input-wrapper">
+                        <label>MIN</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="999"
+                          value={inputMinutes}
+                          onChange={(e) => setInputMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                        />
+                      </div>
+                      <span className="time-separator">:</span>
+                      <div className="input-wrapper">
+                        <label>SEC</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={inputSeconds}
+                          onChange={(e) => setInputSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                        />
+                      </div>
                     </div>
                     <button onClick={startTimer} className="btn btn-primary btn-large">
                       ▶ Start
@@ -275,9 +288,7 @@ function App() {
             )}
 
             {!isHost && (
-              <div className="participant-message">
-                Waiting for host to start timer...
-              </div>
+              <div className="participant-spacer"></div>
             )}
 
             <button
