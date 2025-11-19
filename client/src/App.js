@@ -8,12 +8,12 @@ const getSocketUrl = () => {
   if (process.env.REACT_APP_SOCKET_URL) {
     return process.env.REACT_APP_SOCKET_URL;
   }
-  
+
   // In production use the same domain
   if (process.env.NODE_ENV === 'production') {
     return window.location.origin;
   }
-  
+
   // In development use localhost
   return 'http://localhost:3001';
 };
@@ -183,41 +183,40 @@ function App() {
       <div className="container">
         {!sessionId ? (
           <div className="session-setup">
-          <h1 className="title">Shared Timer</h1>
-          
-          <div className="setup-options">
-            <div className="setup-card setup-card-center">
-              <button onClick={createSession} className="btn btn-primary btn-large">
-                Create
-              </button>
-            </div>
+            <h1 className="title">Shared Timer</h1>
 
-            <div className="setup-card">
-              <h2>Join</h2>
-              <div className="input-group">
-                <label>Session ID:</label>
-                <input
-                  type="text"
-                  placeholder="Enter ID"
-                  value={inputSessionId}
-                  onChange={(e) => setInputSessionId(e.target.value.toUpperCase())}
-                  onKeyPress={(e) => e.key === 'Enter' && joinSession()}
-                  style={{ textTransform: 'uppercase' }}
-                />
+            <div className="setup-options">
+              <div className="setup-card setup-card-center">
+                <button onClick={createSession} className="btn btn-primary btn-large">
+                  Create
+                </button>
               </div>
-              <button onClick={joinSession} className="btn btn-secondary btn-large">
-                Join
-              </button>
+
+              <div className="setup-card">
+                <div className="input-group">
+                  <label>Session ID:</label>
+                  <input
+                    type="text"
+                    placeholder="Enter ID"
+                    value={inputSessionId}
+                    onChange={(e) => setInputSessionId(e.target.value.toUpperCase())}
+                    onKeyPress={(e) => e.key === 'Enter' && joinSession()}
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                </div>
+                <button onClick={joinSession} className="btn btn-secondary btn-large">
+                  Join
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         ) : (
           <div className="timer-view">
             <div className="session-info">
               <div className="session-id">
                 <span>Session ID: </span>
                 <code>{sessionId.toUpperCase()}</code>
-                <button 
+                <button
                   onClick={() => navigator.clipboard.writeText(sessionId.toUpperCase())}
                   className="copy-btn"
                   title="Copy"
@@ -281,7 +280,7 @@ function App() {
               </div>
             )}
 
-            <button 
+            <button
               onClick={() => {
                 setSessionId('');
                 setIsHost(false);
