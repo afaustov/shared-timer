@@ -3,6 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,11 +19,27 @@ app.use(express.json());
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-  });
+  const buildPath = path.join(__dirname, '../client/build');
+
+  if (fs.existsSync(buildPath)) {
+    console.log(`Serving static files from: ${buildPath}`);
+    app.use(express.static(buildPath));
+
+    app.get('*', (req, res) => {
+      const indexPath = path.join(buildPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        console.error('index.html not found in build directory');
+        res.status(404).send('Application is building, please refresh in a moment.');
+      }
+    });
+  } else {
+    console.error(`Build directory not found at: ${buildPath}`);
+    app.get('*', (req, res) => {
+      res.status(503).send('Application is starting up or building. Please check logs.');
+    });
+  }
 }
 
 // Timer sessions storage
@@ -50,7 +67,7 @@ io.on('connection', (socket) => {
       host: socket.id,
       clients: []
     });
-    
+
     socket.join(sessionId);
     socket.emit('session-created', { sessionId });
     console.log(`Session created: ${sessionId} by user ${socket.id}`);
@@ -61,18 +78,18 @@ io.on('connection', (socket) => {
     // Convert ID to uppercase for case-insensitive matching
     const sessionIdUpper = sessionId.toUpperCase();
     const session = sessions.get(sessionIdUpper);
-    
+
     if (!session) {
       socket.emit('session-error', { message: 'Session not found' });
       return;
     }
 
     socket.join(sessionIdUpper);
-    
+
     if (socket.id !== session.host) {
       session.clients.push(socket.id);
     }
-    
+
     // Send current timer state to new participant
     socket.emit('timer-state', session.timer);
     console.log(`User ${socket.id} joined session ${sessionIdUpper}`);
@@ -82,7 +99,7 @@ io.on('connection', (socket) => {
   socket.on('start-timer', ({ sessionId, duration }) => {
     const sessionIdUpper = sessionId.toUpperCase();
     const session = sessions.get(sessionIdUpper);
-    
+
     if (!session || session.host !== socket.id) {
       return;
     }
@@ -103,7 +120,7 @@ io.on('connection', (socket) => {
   socket.on('pause-timer', ({ sessionId }) => {
     const sessionIdUpper = sessionId.toUpperCase();
     const session = sessions.get(sessionIdUpper);
-    
+
     if (!session || session.host !== socket.id) {
       return;
     }
@@ -122,7 +139,7 @@ io.on('connection', (socket) => {
   socket.on('resume-timer', ({ sessionId }) => {
     const sessionIdUpper = sessionId.toUpperCase();
     const session = sessions.get(sessionIdUpper);
-    
+
     if (!session || session.host !== socket.id) {
       return;
     }
@@ -139,7 +156,7 @@ io.on('connection', (socket) => {
   socket.on('reset-timer', ({ sessionId }) => {
     const sessionIdUpper = sessionId.toUpperCase();
     const session = sessions.get(sessionIdUpper);
-    
+
     if (!session || session.host !== socket.id) {
       return;
     }
@@ -166,7 +183,7 @@ io.on('connection', (socket) => {
   // User disconnect
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
-    
+
     // Remove session if host disconnected
     for (const [sessionId, session] of sessions.entries()) {
       if (session.host === socket.id) {
@@ -191,7 +208,7 @@ setInterval(() => {
     if (session.timer.isRunning && session.timer.startTime) {
       const elapsed = Date.now() - session.timer.startTime;
       const remaining = Math.max(0, session.timer.remainingTime - elapsed);
-      
+
       if (remaining <= 0) {
         session.timer.isRunning = false;
         session.timer.remainingTime = 0;
@@ -204,9 +221,8 @@ setInterval(() => {
 }, 100); // Update every 100ms for smoothness
 
 const PORT = process.env.PORT || 3001;
-const HOST = process.env.HOST || '0.0.0.0';
 
-server.listen(PORT, HOST, () => {
-  console.log(`Server running on ${HOST}:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
