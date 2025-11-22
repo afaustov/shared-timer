@@ -2,25 +2,6 @@
 
 Web application for synchronized timer between multiple devices. One user (host) can start the timer, and other participants see synchronized time in real-time.
 
-## 🚀 Quick Start
-
-### For local development:
-1. Install Node.js: https://nodejs.org/
-2. Run: `npm run install-all`
-3. Start: `npm run dev`
-4. Open: http://localhost:3000
-
-### For deployment:
-
-**📤 First upload to GitHub:**
-- See deployment instructions in `RENDER_TROUBLESHOOTING.md`
-
-**🌐 Then deploy on Render:**
-- Open https://render.com
-- "New +" → "Web Service"
-- Select your repository
-- Get link - done!
-
 ## Features
 
 - ✅ Create timer sessions
